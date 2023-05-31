@@ -79,13 +79,13 @@ class Profile(models.Model):
             return f"{self.user.username}"
 
 
-    def save(self, *args, **kwargs):
-        img = Image.open(self.image.path)
-        if img.height > 700 or img.width > 700:
-            output_size = (700, 700)
-            img.thumbnail(output_size)
-            img.save(self.image.path)
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     img = Image.open(self.image.path)
+    #     if img.height > 700 or img.width > 700:
+    #         output_size = (700, 700)
+    #         img.thumbnail(output_size)
+    #         img.save(self.image.path)
+    #     super().save(*args, **kwargs)
 
     
     def thumbnail(self):

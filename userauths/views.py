@@ -42,8 +42,8 @@ def RegisterView(request, *args, **kwargs):
 
 
 def LoginView(request):
-    if request.user.is_authenticated:
-        return redirect('core:feed')
+    # if request.user.is_authenticated:
+    #     return redirect('core:feed')
     
     if request.method == 'POST':
         email = request.POST.get('email')
