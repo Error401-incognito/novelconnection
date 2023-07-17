@@ -31,7 +31,7 @@ $(document).ready(function() {
             console.log(res.post.profile_image);
             console.log(res.post.date);
             
-            let _html = '<div class="card lg:mx-0 uk-animation-slide-bottom-small">\
+            let _html = '<div class="card lg:mx-0 uk-animation-slide-bottom-small mt-3 mb-3">\
             <div class="flex justify-between items-center lg:p-4 p-2.5">\
                 <div class="flex flex-1 items-center space-x-4">\
                     <a href="#">\
@@ -201,14 +201,14 @@ $(document).on("click", "#comment-btn", function(){
         },
         success: function(res){
 
-            let newComment = '<div class="flex card shadow p-2">\
+            let newComment = '<div class="flex card shadow p-2" id="comment-div'+res.data.comment_id+'">\
                     <div class="w-10 h-10 rounded-full relative flex-shrink-0">\
                         <img src="' + res.data.profile_image + '" alt="" class="absolute h-full rounded-full w-full">\
                     </div>\
                     <div>\
-                        <div class="text-gray-700 py-2 px-3 rounded-md bg-gray-100 relative lg:ml-5 ml-2 lg:mr-12 dark:bg-gray-800 dark:text-gray-100">\
-                            <p class="leading-6">' + res.data.comment + '</p>\
-                            <div class="absolute w-3 h-3 top-3 -left-1 bg-gray-100 transform rotate-45 dark:bg-gray-800"></div>\
+                        <div class="text-gray-700 py-2 px-3 rounded-md bg-gray-100 relative lg:ml-5 ml-2 lg:mr-12 dark:bg-gray-800 dark:text-gray-100 flex items-center">\
+                            <p class="leading-6 flex-grow">'+res.data.comment+'</p>\
+                                <button class="ml-auto text-xs ml-3 mr-3" id="delete-comment" data-delete-comment="'+res.data.comment_id+'"> <i class="fas fa-trash text-red-500"></i> </button>\
                         </div>\
                         <div class="text-sm flex items-center space-x-3 mt-2 ml-5">\
                             <a id="like-comment-btn" data-like-comment="'+res.data.comment_id+'" class="like-comment'+res.data.comment_id+' text-red-500" style="color: gray;" > <i id="comment-icon'+res.data.comment_id+'" class=" fas fa-heart  "></i></a> <small><span class="" id="comment-likes-count'+res.data.comment_id+'">0</span></small>\
@@ -315,6 +315,117 @@ $(document).on("click", "#reply-comment-btn", function(){
             $("#reply-input"+id).val("")
             
             console.log(res.data.bool);
+        }
+    })
+})
+
+
+// UnFriend User
+$(document).on("click", "#delete-comment", function(){
+    let id = $(this).attr("data-delete-comment")
+    console.log(id);
+
+    $.ajax({
+        url: "/delete-comment/",
+        dataType: "json",
+        data: {
+            "id":id
+        },
+        success: function(response){
+            console.log(response);
+            $("#comment-div"+id).addClass("d-none")
+        }
+    })
+})
+
+
+// Add Friend
+$(document).on("click", "#add-friend", function(){
+    let id = $(this).attr("data-friend-id")
+    console.log(id);
+
+    $.ajax({
+        url: "/add-friend/",
+        dataType: "json",
+        data:{
+            "id":id
+        },
+        success: function(response){
+            console.log("Bool ==",response.bool);
+            if (response.bool == true) {
+                $("#friend-text").html("<i class='fas fa-user-minus'></i> Cancel Request ")
+                $(".add-friend"+id).addClass("bg-red-600")
+                $(".add-friend"+id).removeClass("bg-blue-600")
+            }
+            if (response.bool == false) {
+                $("#friend-text").html("<i class='fas fa-user-plus'></i> Add Friend ")
+                $(".add-friend"+id).addClass("bg-blue-600")
+                $(".add-friend"+id).removeClass("bg-red-600")
+            }
+        }
+    })
+})
+
+
+// Accept Friend Request
+$(document).on("click", "#accept-friend-request", function(){
+    let id = $(this).attr("data-request-id")
+    console.log(id);
+
+    $.ajax({
+        url: "/accept-friend-request/",
+        dataType: "json",
+        data: {
+            "id":id
+        },
+        success: function(response){
+            console.log(response.data);
+            $(".reject-friend-request-hide"+id).hide()
+            $(".accept-friend-request"+id).html("<i class='fas fa-check-circle'></i> Friend Request Accepted")
+            $(".accept-friend-request"+id).addClass("text-white")
+        }
+    })
+})
+
+
+// Reject Friend Request
+$(document).on("click", "#reject-friend-request", function(){
+    let id = $(this).attr("data-request-id")
+    console.log(id);
+
+    $.ajax({
+        url: "/reject-friend-request/",
+        dataType: "json",
+        data: {
+            "id":id
+        },
+        success: function(response){
+            console.log(response.data);
+            $(".accept-friend-request-hide"+id).hide()
+            $(".reject-friend-request"+id).html("<i class='fas fa-check-circle'></i> Friend Request Rejected")
+            $(".reject-friend-request"+id).addClass("text-white")
+        }
+    })
+})
+
+
+
+// UnFriend User
+$(document).on("click", "#unfriend", function(){
+    let id = $(this).attr("data-friend-id")
+    console.log(id);
+
+    $.ajax({
+        url: "/unfriend/",
+        dataType: "json",
+        data: {
+            "id":id
+        },
+        success: function(response){
+            console.log(response);
+            $("#unfriend-text").html("<i class='fas fa-check-circle'></i> Friend Removed ")
+            $(".unfriend"+id).addClass("bg-blue-600")
+            $(".unfriend"+id).removeClass("bg-red-600")
         }
     })
 })

@@ -4,9 +4,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 
 from userauths.models import User, Profile
 from userauths.forms import UserRegisterForm
+from core.models import FriendRequest, Post
 
 
 def RegisterView(request, *args, **kwargs):
@@ -37,10 +39,6 @@ def RegisterView(request, *args, **kwargs):
     context = {'form':form}
     return render(request, 'userauths/sign-up.html', context)
 
-
-
-
-
 def LoginView(request):
     # if request.user.is_authenticated:
     #     return redirect('core:feed')
@@ -66,8 +64,59 @@ def LoginView(request):
 
     return HttpResponseRedirect("/")
 
-
 def LogoutView(request):
     logout(request)
     messages.success(request, 'You have been logged out')
     return redirect("userauths:sign-in")
+
+
+@login_required
+def my_profile(request):
+    profile = request.user.profile
+    posts = Post.objects.filter(active=True, user=request.user)
+
+    context = {
+        "posts":posts,
+        "profile":profile,
+    }
+    return render(request, "userauths/my-profile.html", context)
+
+
+@login_required
+def friend_profile(request, username):
+    profile = Profile.objects.get(user__username=username)
+    posts = Post.objects.filter(active=True, user=profile.user)
+
+    # Send Friend Request Feature
+    bool = False
+    bool_friend = False
+
+    sender = request.user
+    receiver = profile.user
+    bool_friend = False
+    print("========================  Add or cancel")
+    try:
+        friend_request = FriendRequest.objects.get(sender=sender, receiver=receiver)
+        if friend_request:
+            bool = True
+        else:
+            bool = False
+    except:
+        bool = False
+    # if receiver not in sender.profile.friends.all():
+    #     pass
+    # else:
+    #     print("========================  Unfriend")
+    #     bool_friend = False
+
+    # End Send Friend Request Feature
+    print("Bool =======================", bool)
+    
+
+    context = {
+        "posts":posts,
+        "bool_friend":bool_friend,
+        "bool":bool,
+        "profile":profile,
+    }
+    return render(request, "userauths/friend-profile.html", context)

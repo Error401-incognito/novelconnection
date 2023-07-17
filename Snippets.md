@@ -42,3 +42,16 @@
         </div>
     </div>
 </div>
+
+
+
+<!-- Sweet alert -->
+<script src="https://unpkg.com/sweetalert2@7.8.2/dist/sweetalert2.all.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+
+<!-- Detail Page Scroller Style to calculate height -->
+<div class="reply-div{{c.id}}" style="overflow-y: auto; max-height: 200px;">

@@ -51,7 +51,7 @@
                         </span>
 
                         <div id="logo">
-                            <a href="feed.html"> 
+                            <a href="{% url 'core:feed' %}"> 
                                 <img src="{% static 'assets/images/logo.png' %}" alt="">
                                 <img src="{% static 'assets/images/logo-mobile.png' %}" class="logo_mobile" alt="">
                             </a>
@@ -215,9 +215,55 @@
                                 </div>
                             </div>
 
+                            <a href="#" class="is_icon">
+                                <i class="fas fa-user-plus text-gray-800"></i>
+                                <!-- <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg> -->
+                                <span>{{ friend_request.count }}</span>
+                            </a>
+                            <div uk-drop="mode: click" class="header_dropdown">
+                                <div class="dropdown_scrollbar" data-simplebar>
+                                    <div class="drop_headline">
+                                        <h4>Friend Requests </h4>
+                                        <div class="btn_action">
+                                            <a href="#" data-tippy-placement="left" title="Friend Requests">
+                                                <ion-icon name="settings-outline"></ion-icon>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <ul>
+                                        {% for f in friend_request %}
+                                            <li class="mt-3 mb-4 shadow p-3">
+                                                <a href="#">
+                                                    <div class="drop_avatar">
+                                                        <img src="{{f.sender.profile.image.url}}" alt="">
+                                                    </div>
+                                                    <span class="drop_icon bg-gradient-primary">
+                                                        <i class="icon-feather-thumbs-up"></i>
+                                                    </span>
+                                                    <div class="drop_text">
+                                                        <p> <strong>{{f.sender.profile.full_name}}</strong> send you a friend request. </p>
+                                                        <time> {{f.date|timesince}} ago </time>
+                                                    </div>
+                                                    <div class="d-flex" id="friend-request-button-div">
+                                                        <a id="accept-friend-request"  data-request-id="{{f.sender.id}}" class="accept-friend-request-hide{{f.sender.id}} flex items-center justify-center h-10 px-5 rounded-md bg-blue-600 text-white space-x-1.5 hover:text-white" style="margin-left: 5px;"> 
+                                                            <span style="cursor: pointer;" class="text-white accept-friend-request{{f.sender.id}}" id="friend-text"><i class="fas fa-user-plus"></i> Accept </span>
+                                                        </a>
+                                                        <a id="reject-friend-request"  data-request-id="{{f.sender.id}}" class="reject-friend-request-hide{{f.sender.id}} flex items-center justify-center h-10 px-5 rounded-md bg-red-600 text-white space-x-1.5 hover:text-white" style="margin-left: 5px;"> 
+                                                            <span style="cursor: pointer;" class="text-white reject-friend-request{{f.sender.id}}" id="friend-text"><i class="fas fa-user-minus"></i> Reject </span>
+                                                        </a>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        {% empty %}
+                                            <li>No Friend Request </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+
                             <a href="#" class="is_icon" uk-tooltip="title: Notifications">
                                 <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
-                                <span>3</span>
+                                <span>{{ notification.count }}</span>
                             </a>
                             <div uk-drop="mode: click" class="header_dropdown">
                                 <div class="dropdown_scrollbar" data-simplebar>
@@ -233,159 +279,69 @@
                                         </div>
                                     </div>
                                     <ul>
-                                        <li>
+                                        
+                                        {% for n in notification %}
+                                            <li class="{% if n.is_read == False %}not-read{% endif %} mb-3 mt-3">
+                                                <a href="#">
+                                                    <div class="drop_avatar">
+                                                        <img src="{{n.sender.profile.image.url}}" alt="">
+                                                    </div>
+                                                    <span class="drop_icon bg-gradient-primary">
+                                                        
+                                                        {% if n.notification_type == "New Like" %}<i class="icon-feather-thumbs-up"></i>{% endif %}
+                                                        {% if n.notification_type == "New Comment" %}<i class="icon-feather-message-square"></i>{% endif %}
+                                                        {% if n.notification_type == "Comment Liked" %}<i class="icon-feather-thumbs-up"></i>{% endif %}
+                                                        {% if n.notification_type == "Comment Replied" %}<i class="icon-feather-message-square"></i>{% endif %}
+                                                        {% if n.notification_type == "New Follower" %}<i class="icon-feather-user-plus"></i>{% endif %}
+                                                        {% if n.notification_type == "New Follower" %}<i class="icon-feather-user-plus"></i>{% endif %}
+                                                        {% if n.notification_type == "Friend Request Accepted" %}<i class="icon-feather-check-circle"></i>{% endif %}
+                                                        {% if n.notification_type == "Friend Request" %}<i class="icon-feather-user-plus"></i>{% endif %}
+                                                            
+                                                    </span>
+                                                    <div class="drop_text">
+                                                        <p>
+                                                            <strong>{{n.sender.profile.full_name|title}}</strong> 
+                                                            
+                                                            {% if n.notification_type == "New Like" %} Liked your post {% endif %}
+
+                                                            {% if n.notification_type == "New Comment" %} Commented on your post {% endif %}
+
+                                                            {% if n.notification_type == "Comment Liked" %} Liked your comment on {% endif %}
+
+                                                            {% if n.notification_type == "Comment Replied" %} Replied your comment on {% endif %}
+
+                                                            {% if n.notification_type == "New Follower" %} Just Followed You {% endif %}
+
+                                                            {% if n.notification_type == "Friend Request Accepted" %} Accepted Your Friend Request {% endif %}
+
+                                                            {% if n.notification_type == "Friend Request" %} Sent you a friend Request - <a href="" class="text-blue-500">Accept</a> or <a href="" class="text-red-600">Reject</a> {% endif %}
+                                                            
+                                                            
+                                                            {% if n.post %}
+                                                            <span class="text-link">{{ n.post.title }} </span>
+                                                            {% endif %}
+                                                                
+                                                        </p>
+                                                        <time> 2 hours ago </time>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+
+                                        <!-- <li class="not-read">
                                             <a href="#">
-                                                <div class="drop_avatar">
-                                                    <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
-                                                </div>
-                                                <span class="drop_icon bg-gradient-primary">
-                                                     <i class="icon-feather-thumbs-up"></i>
-                                                 </span>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Adrian Mohani</strong> Like Your Comment On Video
-                                                        <span class="text-link">Learn Prototype Faster </span>
-                                                    </p>
-                                                    <time> 2 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li class="not-read">
-                                            <a href="#">
-                                                <div class="drop_avatar status-online"> <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Stella Johnson</strong> Replay Your Comments in
-                                                        <span class="text-link">Adobe XD Tutorial</span>
-                                                    </p>
-                                                    <time> 9 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-3.jpg' %}" alt="">
-                                                </div>
-                                                <span class="drop_icon bg-gradient-primary">
-                                                    <i class="icon-feather-thumbs-up"></i>
-                                                </span>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Alex Dolgove</strong> Added New Review In Video
-                                                        <span class="text-link">Full Stack PHP Developer</span>
-                                                    </p>
-                                                    <time> 12 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Jonathan Madano</strong> Shared Your Discussion On Video
-                                                        <span class="text-link">Css Flex Box </span>
-                                                    </p>
-                                                    <time> Yesterday </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
-                                                </div>
-                                                <span class="drop_icon bg-gradient-primary">
-                                                    <i class="icon-feather-thumbs-up"></i>
-                                                </span>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Adrian Mohani</strong> Like Your Comment On Course
-                                                        <span class="text-link">Javascript Introduction </span>
-                                                    </p>
-                                                    <time> 2 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar status-online"> <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
+                                                <div class="drop_avatar status-online"> <img src="{{request.user.profile.image.url}}" alt="">
                                                 </div>
                                                 <div class="drop_text">
                                                     <p>
-                                                        <strong>Stella Johnson</strong> Replay Your Comments in
-                                                        <span class="text-link">Programming for Games</span>
+                                                        <strong>{{request.user.profile.full_name}}</strong> Replay Your Comments in
+                                                        <span class="text-link">{{request.user.profile.bio|title}}</span>
                                                     </p>
                                                     <time> 9 hours ago </time>
                                                 </div>
                                             </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Stella Johnson</strong> Replay Your Comments in
-                                                        <span class="text-link">Programming for Games</span>
-                                                    </p>
-                                                    <time> 9 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-3.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Alex Dolgove</strong> Added New Review In Course
-                                                        <span class="text-link">Full Stack PHP Developer</span>
-                                                    </p>
-                                                    <time> 12 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Jonathan Madano</strong> Shared Your Discussion On Course
-                                                        <span class="text-link">Css Flex Box </span>
-                                                    </p>
-                                                    <time> Yesterday </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Adrian Mohani</strong> Like Your Comment On Course
-                                                        <span class="text-link">Javascript Introduction </span>
-                                                    </p>
-                                                    <time> 2 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="#">
-                                                <div class="drop_avatar"> <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
-                                                </div>
-                                                <div class="drop_text">
-                                                    <p>
-                                                        <strong>Stella Johnson</strong> Replay Your Comments in
-                                                        <span class="text-link">Programming for Games</span>
-                                                    </p>
-                                                    <time> 9 hours ago </time>
-                                                </div>
-                                            </a>
-                                        </li>
+                                        </li> -->
+                                        
                                     </ul>
                                 </div>
                             </div>
@@ -497,17 +453,18 @@
 
 
                             <a href="#">
-                                <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" class="is_avatar" alt="">
+                                <img src="{{request.user.profile.image.url}}" class="is_avatar" alt="">
                             </a>
                             <div uk-drop="mode: click;offset:5" class="header_dropdown profile_dropdown">
 
-                                <a href="timeline.html" class="user">
+                                <a href="{% url 'userauths:my-profile' %}" class="user">
                                     <div class="user_avatar">
-                                        <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
+                                        <img src="{{request.user.profile.image.url}}" alt="">
                                     </div>
+                                    
                                     <div class="user_name">
-                                        <div> Stella Johnson </div>
-                                        <span> @johnson</span>
+                                        <div> {{request.user.profile.full_name}} </div>
+                                        <span> @{{request.user.username}}</span>
                                     </div>
                                 </a>
                                 <hr>
@@ -516,7 +473,7 @@
                                     Upgrade To Premium  </span>
                                 </a>
                                 <hr>
-                                <a href="page-setting.html">
+                                <a href="{% url 'userauths:my-profile' %}">
                                     <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
                                     My Account 
                                 </a>
@@ -539,7 +496,7 @@
                                         <span class="uk-switch-button"></span>
                                     </span>
                                 </a>
-                                <a href="form-login.html">
+                                <a href="{% url 'userauths:sign-out' %}">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                                     </svg>
@@ -562,7 +519,7 @@
             <div class="sidebar_inner" data-simplebar>
 
                 <ul>
-                    <li class="active"><a href="feed.html"> 
+                    <li class="active"><a href="{% url 'core:feed' %}"> 
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="text-blue-600"> 
                             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                         </svg>
@@ -689,7 +646,7 @@
 
                 <ul class="side_links" data-sub-title="Pages">
                     <li>
-                        <a href="feed.html">
+                        <a href="{% url 'core:feed' %}">
                             <ion-icon name="settings-outline" class="side-icon"></ion-icon> <span> Setting  </span> </a>
                         <ul>
                             <li><a href="pages-setting.html">layout 1</a></li>

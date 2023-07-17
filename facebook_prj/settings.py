@@ -71,6 +71,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.my_context_processor',
             ],
         },
     },
@@ -182,6 +183,9 @@ JAZZMIN_SETTINGS = {
         "userauths.Profile":"fas fa-address-card",
 
         "core.post": "fas fa-th",
+        "core.Page": "fas fa-users",
+        "core.ReplyComment": "fas fa-reply",
+        "core.group": "fas fa-layer-group",
         "core.notification": "fas fa-bell",
         "core.Comment":"fas fa-comments",
         "core.Friend":"fas fa-users",

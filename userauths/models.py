@@ -21,6 +21,11 @@ GENDER = (
     ("male", "Male"),
 )
 
+WHO_CAN_SEE_MY_FRIENDS = (
+    ("Only Me","Only Me"),
+    ("Everyone","Everyone"),
+)
+
 
 def user_directory_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -54,7 +59,8 @@ class Profile(models.Model):
     about_me = models.TextField(null=True, blank=True)
     phone = models.CharField(max_length=100, null=True, blank=True)
     gender = models.CharField(max_length=100, choices=GENDER, null=True, blank=True)
-    relationship = models.CharField(max_length=100, choices=RELATIONSHIP, null=True, blank=True)
+    relationship = models.CharField(max_length=100, choices=RELATIONSHIP, null=True, blank=True, default="single")
+    friends_visibility = models.CharField(max_length=100, choices=WHO_CAN_SEE_MY_FRIENDS, null=True, blank=True, default="Everyone")
     country = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
@@ -66,6 +72,8 @@ class Profile(models.Model):
     followers = models.ManyToManyField(User, blank=True, related_name="followers")
     followings = models.ManyToManyField(User, blank=True, related_name="followings")
     friends = models.ManyToManyField(User, blank=True, related_name="friends")
+    groups = models.ManyToManyField("core.Group", blank=True, related_name="groups")
+    pages = models.ManyToManyField("core.Page", blank=True, related_name="pages")
     blocked = models.ManyToManyField(User, blank=True, related_name="blocked")
     date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 

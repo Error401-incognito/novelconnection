@@ -101,11 +101,11 @@
                                 <!-- post header-->
                                 <div class="flex justify-between items-center lg:p-4 p-2.5">
                                     <div class="flex flex-1 items-center space-x-4">
-                                        <a href="#">
+                                        <a href="{% url 'userauths:profile' p.user.username %}">
                                             <img src="{{ p.user.profile.image.url }}" style="width: 40px; height: 40px;" class="bg-gray-200 border border-white rounded-full w-10 h-10">
                                         </a>
                                         <div class="flex-1 font-semibold capitalize">
-                                            <a href="#" class="text-black dark:text-gray-100">{{ p.user.profile.full_name|title }}</a>
+                                            <a href="{% url 'userauths:profile' p.user.username %}" class="text-black dark:text-gray-100">{{ p.user.profile.full_name|title }}</a>
                                             <div class="text-gray-700 flex items-center space-x-2">{{p.date|timesince}} ago 
                                                 <ion-icon name="story-time"></ion-icon>
                                             </div>
@@ -259,14 +259,17 @@
                                     <div class="border-t py-4 space-y-4 dark:border-gray-600" id="comment-div{{p.id}}">
                                         
                                         {% for c in p.post_comments|slice:"2" %}
-                                        <div class="flex card shadow p-2">
+                                        <div class="flex card shadow p-2" id="comment-div{{c.id}}">
                                             <div class="w-10 h-10 rounded-full relative flex-shrink-0">
                                                 <img src="{{c.user.profile.image.url}}" alt="" class="absolute h-full rounded-full w-full">
                                             </div>
                                             <div>
-                                                <div class="text-gray-700 py-2 px-3 rounded-md bg-gray-100 relative lg:ml-5 ml-2 lg:mr-12 dark:bg-gray-800 dark:text-gray-100">
-                                                    <p class="leading-6">{{c.comment}}</p>
-                                                    <div class="absolute w-3 h-3 top-3 -left-1 bg-gray-100 transform rotate-45 dark:bg-gray-800"></div>
+                                               
+                                                <div class="text-gray-700 py-2 px-3 rounded-md bg-gray-100 relative lg:ml-5 ml-2 lg:mr-12 dark:bg-gray-800 dark:text-gray-100 flex items-center">
+                                                    <p class="leading-6 flex-grow">{{c.comment}}</p>
+                                                    {% if c.user == request.user %}
+                                                        <button class="ml-auto text-xs ml-3 mr-3" id="delete-comment" data-delete-comment="{{c.id}}"> <i class="fas fa-trash text-red-500"></i> </button>
+                                                    {% endif %}
                                                 </div>
                                                 <div class="text-sm flex items-center space-x-3 mt-2 ml-5">
                                                     <a id="like-comment-btn" data-like-comment="{{c.id}}" class="like-comment{{c.id}} text-red-500" {% if request.user in c.likes.all %} style="color: red;" {% else %} style="color: gray;"  {% endif %} > <i id="comment-icon{{c.cid}}" class=" fas fa-heart  "></i></a> <small><span class="" id="comment-likes-count{{c.id}}">{{ c.likes.all.count }}</span></small> 
@@ -304,7 +307,8 @@
                                                         </div>
                                                         
                                                         {% if c.comment_replies.count > 0 %}
-                                                            <span style="border-bottom: dashed 1px rgb(73, 173, 255);"><a href="" class="text-blue-500"> <small>View All {{c.comment_replies.count}} Replies</small> </a></span>
+                                                        
+                                                        <span style="border-bottom: dashed 1px rgb(73, 173, 255);"><a href="{% url 'core:post-detail' p.slug %}" class="text-blue-500"> <small>View All {{c.comment_replies.count}} Replies</small> </a></span>
                                                         {% endif %}
                                                             
                                                     {% endfor %}
@@ -321,7 +325,7 @@
                                     {% if p.post_comments.count|sub:2 < 1 %}
                                     <a href="#" class="hover:text-blue-600 hover:underline">No more Comments </a>
                                     {% else %}
-                                    <a href="#" class="hover:text-blue-600 hover:underline">  View {{p.post_comments.count|sub:2}} more Comments </a>
+                                    <a href="{% url 'core:post-detail' p.slug %}" class="hover:text-blue-600 hover:underline">  View {{p.post_comments.count|sub:2}} more Comments </a>
                                     {% endif %}
                                         
 
@@ -983,7 +987,6 @@
                     <div class="flex-1 pt-2"  >
                             <img src="https://joadre.com/wp-content/uploads/2019/02/no-image.jpg" id="preview_post_thumbnail" style="width: 100%; height: 200px;object-fit: cover; border-radius: 10px;" alt="" for="post-thumbnail">
                         </div>
-
                 </div>
 
                 <script>
@@ -1015,8 +1018,8 @@
                 <div class="flex items-center w-full justify-between border-t p-3">
 
                     <select class="selectpicker mt-2 story" name="visibility" id="visibility">
-                        <option value="Only Me">Only me</option>
                         <option value="Everyone">Everyone</option>
+                        <option value="Only Me">Only me</option>
                     </select>
 
                     <div class="flex space-x-2">

@@ -28,9 +28,12 @@ FRIEND_REQUEST = (
 
 NOTIFICATION_TYPE = (
     ("Friend Request", "Friend Request"),
+    ("Friend Request Accepted", "Friend Request Accepted"),
     ("New Follower", "New Follower"),
     ("New Like", "New Like"),
     ("New Comment", "New Comment"),
+    ("Comment Liked", "Comment Liked"),
+    ("Comment Replied", "Comment Replied"),
     
 
 )
@@ -113,11 +116,10 @@ class Gallery(models.Model):
         return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 30px;" />' % (self.image))
 
 
-
 class FriendRequest(models.Model):
     fid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sender")
-    reciever = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reciever")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="sender")
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="receiver")
     status = models.CharField(max_length=10, default="pending", choices=FRIEND_REQUEST)
     date = models.DateTimeField(auto_now_add=True)
 
@@ -141,8 +143,6 @@ class Friend(models.Model):
         ordering = ["-date"]
         verbose_name_plural = "Friend"
 
-
-    
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -181,7 +181,10 @@ class ReplyComment(models.Model):
         verbose_name_plural = "Reply Comment"
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="noti_user")
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="noti_sender")
+    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name="noti_post")
+    comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, null=True, blank=True, related_name="noti_comment")
     notification_type = models.CharField(max_length=100, choices=NOTIFICATION_TYPE, default="none")
     is_read = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
@@ -193,3 +196,142 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.notification_type}"
+
+
+class Group(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    memebers = models.ManyToManyField(User, blank=True, related_name="memebers")
+
+    image = models.ImageField(upload_to=user_directory_path, null=True, blank=True)
+    name = models.CharField(max_length=500, blank=True ,null=True)
+    description = models.TextField(blank=True ,null=True)
+    video = models.FileField(upload_to=user_directory_path, null=True, blank=True)
+    visibility = models.CharField(max_length=10, default="everyone", choices=VISIBILITY)
+    gid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True)
+    views = models.PositiveIntegerField(default=0)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Group"
+    
+    def save(self, *args, **kwargs):
+        uuid_key = shortuuid.uuid()
+        uniqueid = uuid_key[:4]
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.name) + "-" + str(uniqueid.lower())
+        super(Group, self).save(*args, **kwargs) 
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+    
+    def memeber_count(self):
+        return self.memebers.all().count()
+    
+
+class GroupPost(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    title = models.CharField(max_length=500, blank=True ,null=True)
+    image = models.ImageField(upload_to=user_directory_path, null=True, blank=True)
+    visibility = models.CharField(max_length=10, default="everyone", choices=VISIBILITY)
+    pid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
+    likes = models.ManyToManyField(User, blank=True, related_name="group_post_likes")
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    views = models.PositiveIntegerField(default=0)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Group Post"
+    
+    def save(self, *args, **kwargs):
+        uuid_key = shortuuid.uuid()
+        uniqueid = uuid_key[:4]
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.title) + "-" + str(uniqueid.lower())
+        super(GroupPost, self).save(*args, **kwargs) 
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+
+
+
+
+class Page(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    followers = models.ManyToManyField(User, blank=True, related_name="page_followers")
+    image = models.ImageField(upload_to=user_directory_path, null=True, blank=True)
+    name = models.CharField(max_length=500, blank=True ,null=True)
+    description = models.TextField(blank=True ,null=True)
+    video = models.FileField(upload_to=user_directory_path, null=True, blank=True)
+    visibility = models.CharField(max_length=10, default="everyone", choices=VISIBILITY)
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True)
+    views = models.PositiveIntegerField(default=0)
+    date = models.DateTimeField(auto_now_add=True)
+    gid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Page"
+    
+    def save(self, *args, **kwargs):
+        uuid_key = shortuuid.uuid()
+        uniqueid = uuid_key[:4]
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.name) + "-" + str(uniqueid.lower())
+        super(Page, self).save(*args, **kwargs) 
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+    
+    def followers_count(self):
+        return self.followers.all().count()
+
+
+
+
+class PagePost(models.Model):
+    page = models.ForeignKey(Page, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    title = models.CharField(max_length=500, blank=True ,null=True)
+    image = models.ImageField(upload_to=user_directory_path, null=True, blank=True)
+    visibility = models.CharField(max_length=10, default="everyone", choices=VISIBILITY)
+    pid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
+    likes = models.ManyToManyField(User, blank=True, related_name="page_post_likes")
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    views = models.PositiveIntegerField(default=0)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Group Post"
+    
+    def save(self, *args, **kwargs):
+        uuid_key = shortuuid.uuid()
+        uniqueid = uuid_key[:4]
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.title) + "-" + str(uniqueid.lower())
+        super(PagePost, self).save(*args, **kwargs) 
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+    
+    
