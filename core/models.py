@@ -118,8 +118,8 @@ class Gallery(models.Model):
 
 class FriendRequest(models.Model):
     fid = ShortUUIDField(length=7, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz123")
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="sender")
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="receiver")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="request_sender")
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="request_receiver")
     status = models.CharField(max_length=10, default="pending", choices=FRIEND_REQUEST)
     date = models.DateTimeField(auto_now_add=True)
 
@@ -335,3 +335,71 @@ class PagePost(models.Model):
         return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
     
     
+
+class ChatMessage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="chat_user")
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="sender")
+    reciever = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="reciever")
+    message = models.CharField(max_length=10000000000)
+    is_read = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+    mid = ShortUUIDField(length=10, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz")
+    
+    def __str__(self):
+        return self.user
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Personal Chat"
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+    
+    
+    
+class GroupChat(models.Model):
+    name = models.CharField(max_length=1000)
+    description = models.CharField(max_length=10000)
+    images = models.FileField(upload_to="group_chat", blank=True, null=True)
+    host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="group_host")
+    members = models.ManyToManyField(User, related_name="group_chat_members")
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Group Chat"
+    
+    def save(self, *args, **kwargs):
+        uuid_key = shortuuid.uuid()
+        uniqueid = uuid_key[:4]
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.name) + "-" + str(uniqueid.lower())
+        super(GroupChat, self).save(*args, **kwargs) 
+
+    def thumbnail(self):
+        return mark_safe('<img src="/media/%s" width="50" height="50" object-fit:"cover" style="border-radius: 5px;" />' % (self.image))
+    
+    def last_message(self):
+        last_message = GroupChatMessage.objects.filter(groupchat=self).order_by("-id").first()
+        return last_message
+
+class GroupChatMessage(models.Model):
+    groupchat = models.ForeignKey(GroupChat, on_delete=models.SET_NULL, null=True, related_name="group_chat")
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="group_chat_message_sender")
+    message = models.CharField(max_length=100000)
+    is_read = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+    mid = ShortUUIDField(length=10, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz")
+    
+    
+    def __str__(self):
+        return self.groupchat.name
+    
+    class Meta:
+        ordering = ["-date"]
+        verbose_name_plural = "Group Chat Messages"

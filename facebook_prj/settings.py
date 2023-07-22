@@ -27,6 +27,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+ASGI_APPLICATION = 'facebook_prj.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Application definition
 
@@ -46,6 +53,8 @@ INSTALLED_APPS = [
 
     # THird Party Apps
     'mathfilters',
+    'channels'
+
 ]
 
 MIDDLEWARE = [
@@ -191,7 +200,6 @@ JAZZMIN_SETTINGS = {
         "core.Friend":"fas fa-users",
         "core.FriendRequest":"fas fa-user-plus",
     },
-
 
     "show_ui_builder" : True
 }

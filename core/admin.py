@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import Post, Friend, FriendRequest, Notification, Comment, Gallery, ReplyComment, Group, GroupPost, Page, PagePost
+from core.models import Post, Friend, FriendRequest, Notification, Comment, Gallery, ReplyComment, Group, GroupPost, Page, PagePost, ChatMessage, GroupChat, GroupChatMessage
 
 
 class FriendRequestAdmin(admin.ModelAdmin):
@@ -55,6 +55,20 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ['user', 'post', 'comment', 'active']
 
 
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ['user', 'sender', 'reciever' ,'message','date', 'is_read']
+    
+
+class GroupChatAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description' ,'host','active']
+    prepopulated_fields = {"slug": ("name", )}
+    
+
+class GroupChatMessageAdmin(admin.ModelAdmin):
+    list_display = ['groupchat', 'sender', 'message' ,'is_read','date']
+
+    
+
 admin.site.register(Notification, NotificationAdmin)
 admin.site.register(Friend, FriendAdmin)
 admin.site.register(FriendRequest, FriendRequestAdmin)
@@ -63,3 +77,6 @@ admin.site.register(Comment, CommentAdmin)
 admin.site.register(ReplyComment, ReplyAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Page, PageAdmin)
+admin.site.register(ChatMessage, ChatMessageAdmin)
+admin.site.register(GroupChatMessage, GroupChatMessageAdmin)
+admin.site.register(GroupChat, GroupChatAdmin)

@@ -4,9 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils.timesince import timesince
 from django.utils.text import slugify
+from django.db.models import OuterRef, Subquery
+from django.db.models import Q, Count, Sum, F, FloatField
 
-from core.models import Post, Friend, FriendRequest, Notification, Comment, ReplyComment
+
+from core.models import Post, Friend, FriendRequest, Notification, Comment, ReplyComment, ChatMessage, GroupChatMessage, GroupChat
 from userauths.models import User, Profile, user_directory_path
+
 
 import shortuuid
 
@@ -301,4 +305,150 @@ def unfriend(request):
     
 
 
+@login_required
+def inbox(request):
+    user_id = request.user
+
+    chat_message = ChatMessage.objects.filter(
+        id__in =  Subquery(
+            User.objects.filter(
+                Q(sender__reciever=user_id) |
+                Q(reciever__sender=user_id)
+            ).distinct().annotate(
+                last_msg=Subquery(
+                    ChatMessage.objects.filter(
+                        Q(sender=OuterRef('id'),reciever=user_id) |
+                        Q(reciever=OuterRef('id'),sender=user_id)
+                    ).order_by('-id')[:1].values_list('id',flat=True) 
+                )
+            ).values_list('last_msg', flat=True).order_by("-id")
+        )
+    ).order_by("-id")
     
+    context = {
+        'chat_message': chat_message,
+    }
+    return render(request, 'chat/inbox.html', context)
+
+
+@login_required
+def inbox_detail(request, username):
+    user_id = request.user
+    message_list = ChatMessage.objects.filter(
+        id__in =  Subquery(
+            User.objects.filter(
+                Q(sender__reciever=user_id) |
+                Q(reciever__sender=user_id)
+            ).distinct().annotate(
+                last_msg=Subquery(
+                    ChatMessage.objects.filter(
+                        Q(sender=OuterRef('id'),reciever=user_id) |
+                        Q(reciever=OuterRef('id'),sender=user_id)
+                    ).order_by('-id')[:1].values_list('id',flat=True) 
+                )
+            ).values_list('last_msg', flat=True).order_by("-id")
+        )
+    ).order_by("-id")
+
+
+    
+    sender = request.user
+    receiver = User.objects.get(username=username)
+    receiver_details = User.objects.get(username=username)
+    
+    messages_detail = ChatMessage.objects.filter(
+        Q(sender=sender, reciever=receiver) | Q(sender=receiver, reciever=sender)
+    ).order_by("date")
+
+    messages_detail.update(is_read=True)
+    
+    if messages_detail:
+        r = messages_detail.first()
+        reciever = User.objects.get(username=r.reciever)
+    else:
+        reciever = User.objects.get(username=username)
+
+    context = {
+        'message_detail': messages_detail,
+        "reciever":reciever,
+        "sender":sender,
+        "receiver_details":receiver_details,
+        "message_list":message_list,
+    }
+    return render(request, 'chat/inbox_detail.html', context)
+
+
+def block_user(request):
+    id = request.GET['id']
+    user = request.user
+    friend = User.objects.get(id=id)
+
+    if user.id == friend.id:
+        return JsonResponse({'error': 'You cannot block yourself'})
+
+
+    if friend in user.profile.friends.all():
+        user.profile.blocked.add(friend)
+        user.profile.friends.remove(friend)
+        friend.profile.friends.remove(user)
+    else:
+        return JsonResponse({'error': 'You cannot block someone that is not your friend'})
+
+    return JsonResponse({'success': 'User Blocked'})
+
+
+@login_required
+def group_inbox(request):
+    groupchat = GroupChat.objects.filter(members__in=User.objects.filter(pk=request.user.pk), active=True)
+    print("groupchat =============", groupchat)
+    context = {
+        'groupchat': groupchat,
+    }
+    return render(request, 'chat/group_inbox.html', context)
+
+
+@login_required
+def group_inbox_detail(request, slug):
+    groupchat_list = GroupChat.objects.filter(members__in=User.objects.filter(pk=request.user.pk), active=True)
+    groupchat = GroupChat.objects.get(slug=slug, active=True)
+    group_messages = GroupChatMessage.objects.filter(groupchat=groupchat).order_by("id")
+
+    if request.user not in groupchat.members.all():
+        return redirect("core:join_group_chat_page", groupchat.slug)
+
+
+    context = {
+        'groupchat': groupchat,
+        'group_name': groupchat.slug,
+        'group_messages': group_messages,
+        'groupchat_list': groupchat_list,
+    }
+    return render(request, 'chat/group_inbox_detail.html', context)
+
+def join_group_chat_page(request, slug):
+    groupchat = GroupChat.objects.get(slug=slug, active=True)
+
+    context = {
+        'groupchat': groupchat,
+    }
+    return render(request, 'chat/join_group_chat_page.html', context)
+
+
+def join_group_chat(request, slug):
+    groupchat = GroupChat.objects.get(slug=slug, active=True)
+
+    if request.user in groupchat.members.all():
+        return redirect("core:group_inbox_detail", groupchat.slug)
+    
+    groupchat.members.add(request.user)
+    return redirect("core:group_inbox_detail", groupchat.slug)
+
+
+def leave_group_chat(request, slug):
+    groupchat = GroupChat.objects.get(slug=slug, active=True)
+
+    if request.user in groupchat.members.all():
+        groupchat.members.remove(request.user)
+        return redirect("core:join_group_chat_page", groupchat.slug)
+
+    return redirect("core:join_group_chat_page", groupchat.slug)
