@@ -137,7 +137,7 @@ class Friend(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user}"
+        return f"{self.user.username}"
     
     class Meta:
         ordering = ["-date"]
@@ -195,7 +195,7 @@ class Notification(models.Model):
         verbose_name_plural = "Notification"
 
     def __str__(self):
-        return f"{self.user} - {self.notification_type}"
+        return f"{self.user.username} - {self.notification_type}"
 
 
 class Group(models.Model):
@@ -346,7 +346,7 @@ class ChatMessage(models.Model):
     mid = ShortUUIDField(length=10, max_length=25, alphabet="abcdefghijklmnopqrstuvxyz")
     
     def __str__(self):
-        return self.user
+        return self.user.username
     
     class Meta:
         ordering = ["-date"]

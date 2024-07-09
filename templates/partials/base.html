@@ -26,6 +26,12 @@
     <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Swal -->
+    <script src="https://unpkg.com/sweetalert2@7.8.2/dist/sweetalert2.all.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
     <style>
         a{
@@ -61,45 +67,71 @@
                     <!-- search icon for mobile -->
                     <div class="header-search-icon" uk-toggle="target: #wrapper ; cls: show-searchbox"> </div>
                     <div class="header_search"><i class="uil-search-alt"></i>
-                        <input value="" type="text" class="form-control" placeholder="Search for Friends , Videos and more.." autocomplete="off">
+                        <input value="" type="text" class="form-control" placeholder="Search for Friends , Videos and more.." id="search-input" autocomplete="off">
                         <div uk-drop="mode: click" class="header_search_dropdown">
-
+                            
                             <h4 class="search_title"> Recently </h4>
-                            <ul>
+                            <!-- <ul>
+                                
                                 <li>
                                     <a href="#">  
                                         <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="" class="list-avatar">
                                         <div class="list-name">  Erica Jones </div>
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="#">  
-                                        <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="" class="list-avatar">
-                                        <div class="list-name">  Coffee  Addicts </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">  
-                                        <img src="{% static 'assets/images/avatars/avatar-3.jpg' %}" alt="" class="list-avatar">
-                                        <div class="list-name"> Mountain Riders </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">  
-                                        <img src="{% static 'assets/images/avatars/avatar-4.jpg' %}" alt="" class="list-avatar">
-                                        <div class="list-name"> Property Rent And Sale  </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">  
-                                        <img src="{% static 'assets/images/avatars/avatar-5.jpg' %}" alt="" class="list-avatar">
-                                        <div class="list-name">  Erica Jones </div>
-                                    </a>
-                                </li>
-                            </ul>
 
+                            </ul> -->
+                            <ul id="search-results"></ul>
                         </div>
                     </div>
+
+
+                        <script>
+                            $(document).ready(function() {
+                                $('#search-input').on('input', function() {
+                                    const query = $(this).val().trim();
+
+                                    if (query) {
+                                        $.ajax({
+                                            url: '/search/',
+                                            data: {
+                                                'q': query,
+                                            },
+                                            dataType: 'json',
+                                            success: function(data) {
+                                                const resultsUl = $('#search-results');
+                                                resultsUl.empty();
+
+                                                for (const user of data.users) {
+                                                    const listItem = $('<li></li>');
+
+                                                    const link = $('<a></a>').attr('href', '/user/profile/'+user.username + '/');
+                                                    listItem.append(link);
+
+                                                    if (user.profile_image) {
+                                                        const profileImage = $('<img>').attr('src', user.profile_image);
+                                                        profileImage.attr('alt', 'Profile Image');
+                                                        profileImage.addClass('list-avatar');
+                                                        link.append(profileImage);
+                                                    }
+
+                                                    const nameDiv = $('<div></div>').addClass('list-name').text(user.full_name);
+                                                    link.append(nameDiv);
+
+                                                    resultsUl.append(listItem);
+                                                }
+                                            },
+                                            error: function() {
+                                                console.log('Error occurred during the AJAX request.');
+                                            }
+                                        });
+                                    } else {
+                                        $('#search-results').empty();
+                                    }
+                                });
+                            });
+
+                        </script>
 
                     <div class="right_side">
 
@@ -314,7 +346,7 @@
 
                                                             {% if n.notification_type == "Friend Request Accepted" %} Accepted Your Friend Request {% endif %}
 
-                                                            {% if n.notification_type == "Friend Request" %} Sent you a friend Request - <a href="" class="text-blue-500">Accept</a> or <a href="" class="text-red-600">Reject</a> {% endif %}
+                                                            {% if n.notification_type == "Friend Request" %} Sent you a friend Request  {% endif %}
                                                             
                                                             
                                                             {% if n.post %}
@@ -322,7 +354,7 @@
                                                             {% endif %}
                                                                 
                                                         </p>
-                                                        <time> 2 hours ago </time>
+                                                        <time> <small>{{n.date|timesince}} ago</small> </time>
                                                     </div>
                                                 </a>
                                             </li>
@@ -349,7 +381,7 @@
                             <!-- Message -->
                             <a href="#" class="is_icon" uk-tooltip="title: Message">
                                 <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd"></path></svg>
-                                <span>4</span>
+                                <span>{{ chat_message.count }}</span>
                             </a>
                             <div uk-drop="mode: click" class="header_dropdown is_message">
                                 <div class="dropdown_scrollbar" data-simplebar>
@@ -369,7 +401,7 @@
                                         {% for m in chat_message %}
                                             {% if request.user == m.sender %}
                                                 <li class="un-read" style="overflow: hidden;">
-                                                    <a href="#">
+                                                    <a href="{% url 'core:inbox_detail' m.reciever.username %}">
                                                         <div class="drop_avatar"> <img style="object-fit: cover; width: 40px; height: 40px;" src="{{m.reciever.profile.image.url}}" alt="">
                                                         </div>
                                                         <div class="drop_text">
@@ -381,7 +413,7 @@
                                             {% endif %}
                                             {% if request.user == m.reciever %}
                                                 <li class="un-read" style="overflow: hidden;">
-                                                    <a href="#">
+                                                    <a href="{% url 'core:inbox_detail' m.sender.username %}">
                                                         <div class="drop_avatar"> <img style="object-fit: cover; width: 40px; height: 40px;" src="{{m.sender.profile.image.url}}" alt="">
                                                         </div>
                                                         <div class="drop_text">
@@ -423,8 +455,12 @@
                                 </a>
                                 <hr>
                                 <a href="{% url 'userauths:my-profile' %}">
-                                    <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
+                                    <i class="fas fa-user"></i>
                                     My Account 
+                                </a>
+                                <a href="{% url 'userauths:profile-update' %}">
+                                    <i class="fas fa-cog"></i>
+                                    Profile Settings
                                 </a>
                                 <a href="groups.html">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -503,7 +539,7 @@
                         </svg>
                         <span> Course</span></a>
                     </li>
-                    <li><a href="games.html"> 
+                    <li><a href="{% url 'core:games' %}"> 
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="text-green-500">
                             <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
                         </svg>  <span>  Games </span></a>
@@ -564,44 +600,40 @@
 
                 <div class="contact-list my-2 ml-1">
 
-                    <a href="chats-friend.html">
+                    {% for f in request.user.profile.friends.all %}
+                                    
+                                    
+                    <a href="#">
                         <div class="contact-avatar">
-                            <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" alt="">
+                            <img src="{{f.profile.image.url}}" alt="">
                             <span class="user_status status_online"></span>
                         </div>
-                        <div class="contact-username"> Dennis Han</div>
+                        <div class="contact-username"> {{f.profile.full_name}}</div>
                     </a>
-                    <a href="chats-friend.html">
-                        <div class="contact-avatar">
-                            <img src="{% static 'assets/images/avatars/avatar-2.jpg' %}" alt="">
-                            <span class="user_status"></span>
+                    <div uk-drop="pos: left-center ;animation: uk-animation-slide-left-small">
+                        <div class="contact-list-box">
+                            <div class="contact-avatar">
+                                <img src="{{f.profile.image.url}}" alt="">
+                                <span class="user_status status_online"></span>
+                            </div>
+                            <div class="contact-username">  {{f.profile.full_name}}</div>
+                            <p>
+                                <ion-icon name="people" class="text-lg mr-1"></ion-icon> Become friends with
+                                <strong> Stella Johnson </strong> and <strong> 14 Others</strong>
+                            </p>
+                            <div class="contact-list-box-btns">
+                                <a href="{% url 'core:inbox_detail' f.username %}" class="button primary flex-1 block mr-2"> <i class="uil-envelope mr-1"></i> Send message</a>
+                                <button type="button" href="#" class="button secondary button-icon mr-2"><i class="uil-list-ul"> </i> </button>
+                                <button type="button" a href="#" class="button secondary button-icon"> <i class="uil-ellipsis-h"> </i> </button>
+                            </div>
                         </div>
-                        <div class="contact-username"> Erica Jones</div>
-                    </a>
-                    <a href="chats-friend.html">
-                        <div class="contact-avatar">
-                            <img src="{% static 'assets/images/avatars/avatar-7.jpg' %}" alt="">
-                        </div>
-                        <div class="contact-username">Stella Johnson</div>
-                    </a>
-                    <a href="chats-friend.html">
-                        <div class="contact-avatar">
-                            <img src="{% static 'assets/images/avatars/avatar-4.jpg' %}" alt="">
-                        </div>
-                        <div class="contact-username"> Alex Dolgove</div>
-                    </a>
+                    </div>
+                    {% endfor %}
 
                 </div>
 
                 <ul class="side_links" data-sub-title="Pages">
-                    <li>
-                        <a href="{% url 'core:feed' %}">
-                            <ion-icon name="settings-outline" class="side-icon"></ion-icon> <span> Setting  </span> </a>
-                        <ul>
-                            <li><a href="pages-setting.html">layout 1</a></li>
-                            <li><a href="pages-setting2.html">layout 2</a></li>
-                        </ul>
-                    </li>
+                    <li><a href="{% url 'userauths:profile-update' %}"><ion-icon name="settings-outline" class="side-icon"></ion-icon> <span> Setting  </span> </a></li>
                     <li>
                         <a href="#">
                             <ion-icon name="albums-outline" class="side-icon"></ion-icon> <span> Info Pages  </span> </a>
@@ -621,27 +653,19 @@
                     </li>
                     <li>
                         <a href="#">
-                            <ion-icon name="code-slash-outline" class="side-icon"></ion-icon> <span> Development  </span> </a>
-                        <ul>
-                            <li><a href="development-components.html"> Compounents </a></li>
-                            <li><a href="development-plugins.html"> Plugins </a></li>
-                            <li><a href="development-icons.html"> Icons </a></li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">
                             <ion-icon name="log-in-outline" class="side-icon"></ion-icon> <span>  Authentication  </span> </a>
-                        <ul>
-                            <li><a href="form-login.html">form login </a></li>
-                            <li><a href="form-register.html">form register</a></li>
-                        </ul>
+                            
+                            {% if request.user.is_authenticated %}
+                            <ul><li><a href="{% url 'userauths:sign-out' %}">Sign Out </a></li></ul>
+                            {% endif %}
+                                
                     </li>
 
                 </ul>
 
                 <div class="footer-links">
                     <a href="#">About</a>
-                    <a href="#">Blog </a>
+                    <a href="#">Blog </a>       
                     <a href="#">Careers</a>
                     <a href="#">Support</a>
                     <a href="#">Contact Us </a>
@@ -661,6 +685,18 @@
             
         {% endblock content %}
             
+        
+        <script>
+            {% for message in messages %}
+    
+            Swal.fire({
+                icon: '{{message.tags}}',
+                title: '{{message}}',
+                text: '{{message.tags}}',
+                timer: 1500
+            })
+            {% endfor %}
+        </script>
 
 
     <!-- For Night mode -->

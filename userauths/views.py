@@ -7,7 +7,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 
 from userauths.models import User, Profile
-from userauths.forms import UserRegisterForm
+from userauths.forms import UserRegisterForm, ProfileUpdateForm, UserUpdateForm
 from core.models import FriendRequest, Post
 
 
@@ -120,3 +120,26 @@ def friend_profile(request, username):
         "profile":profile,
     }
     return render(request, "userauths/friend-profile.html", context)
+
+
+@login_required
+def profile_update(request):
+    if request.method == "POST":
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+
+        if p_form.is_valid() and u_form.is_valid():
+            p_form.save()
+            u_form.save()
+            messages.success(request, "Profile Updated Successfully.")
+            return redirect('userauths:profile-update')
+    else:
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+        u_form = UserUpdateForm(instance=request.user)
+
+    context = {
+        'p_form': p_form,
+        'u_form': u_form,
+    }
+    return render(request, 'userauths/profile-update.html', context)
+

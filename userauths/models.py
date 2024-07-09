@@ -45,7 +45,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        return self.username
+        return str(self.username)
 
 
 
@@ -56,7 +56,7 @@ class Profile(models.Model):
     image = models.ImageField(upload_to=user_directory_path, default="default.jpg", null=True, blank=True)
     full_name = models.CharField(max_length=1000, null=True, blank=True)
     bio = models.CharField(max_length=100, null=True, blank=True)
-    about_me = models.TextField(null=True, blank=True)
+    about_me = models.CharField( max_length=1000,null=True, blank=True)
     phone = models.CharField(max_length=100, null=True, blank=True)
     gender = models.CharField(max_length=100, choices=GENDER, null=True, blank=True)
     relationship = models.CharField(max_length=100, choices=RELATIONSHIP, null=True, blank=True, default="single")
@@ -82,9 +82,9 @@ class Profile(models.Model):
 
     def __str__(self):
         if self.full_name:
-            return f"{self.full_name}"
+            return str(self.full_name)
         else:
-            return f"{self.user.username}"
+            return str(self.user.username)
 
 
     # def save(self, *args, **kwargs):
